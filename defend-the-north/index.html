@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Security: Content Security Policy for a static client-side app -->
+    <!-- Allows same-origin resources only; no inline scripts or styles from external origins -->
+    <!-- Note: frame-ancestors is intentionally omitted here — it is ignored in <meta> CSP tags
+         by all browsers. Set X-Frame-Options: DENY and frame-ancestors 'none' as HTTP response
+         headers on the production server for effective clickjacking protection. -->
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; form-action 'self';" />
+
+    <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml" />
+    <title>Defend the North: Incident Command Simulator</title>
+    <meta name="description" content="An educational cybersecurity incident-response simulation for NorthStar Health Services. Make decisions, learn security principles, and earn your rating." />
+    <meta name="robots" content="index, follow" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+
+    <!-- ===================================================
+         SECURITY NOTICE BANNER (always visible)
+         =================================================== -->
+    <div class="security-banner" role="alert" aria-live="polite">
+      <span class="security-banner__icon" aria-hidden="true">&#x26A0;</span>
+      <span>This is a fictional cybersecurity training simulation. Do not enter real credentials or confidential information.</span>
+    </div>
+
+    <!-- ===================================================
+         SITE HEADER
+         =================================================== -->
+    <header class="site-header" role="banner">
+      <div class="site-header__inner">
+        <div class="site-header__brand">
+          <!-- CSS shield icon -->
+          <div class="shield-icon" aria-hidden="true">
+            <div class="shield-icon__body">
+              <div class="shield-icon__inner"></div>
+            </div>
+          </div>
+          <div class="site-header__titles">
+            <span class="site-header__title">DEFEND THE NORTH</span>
+            <span class="site-header__subtitle">Incident Command Simulator</span>
+          </div>
+        </div>
+        <div class="site-header__status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="header-status" class="status-text">STANDBY</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===================================================
+         MAIN APPLICATION AREA
+         =================================================== -->
+    <main id="main-content" role="main">
+
+      <!-- -----------------------------------------------
+           VIEW 1: INCIDENT BRIEFING
+           ----------------------------------------------- -->
+      <section
+        id="view-briefing"
+        class="view view--active"
+        aria-labelledby="briefing-heading"
+        aria-hidden="false"
+      >
+        <div class="view__container">
+
+          <div class="briefing-header">
+            <div class="incident-badge" role="img" aria-label="Critical Incident">
+              <span class="incident-badge__label">INCIDENT ACTIVE</span>
+              <span class="incident-badge__code">INC-2024-11-07</span>
+            </div>
+            <h1 id="briefing-heading" class="briefing-title">Incident Briefing</h1>
+            <p class="briefing-org">NorthStar Health Services — Cybersecurity Incident Response</p>
+          </div>
+
+          <div class="briefing-grid">
+            <!-- Organization overview -->
+            <article class="card" aria-labelledby="org-heading">
+              <h2 id="org-heading" class="card__heading">
+                <span class="card__heading-icon" aria-hidden="true">&#x1F3E5;</span>
+                Organization Profile
+              </h2>
+              <dl class="org-detail-list">
+                <div class="org-detail-list__item">
+                  <dt>Organization</dt>
+                  <dd>NorthStar Health Services</dd>
+                </div>
+                <div class="org-detail-list__item">
+                  <dt>Sector</dt>
+                  <dd>Canadian Healthcare</dd>
+                </div>
+                <div class="org-detail-list__item">
+                  <dt>Size</dt>
+                  <dd>4,200 employees across 12 facilities</dd>
+                </div>
+                <div class="org-detail-list__item">
+                  <dt>Critical Systems</dt>
+                  <dd>Patient records, lab systems, medical devices, administrative network</dd>
+                </div>
+                <div class="org-detail-list__item">
+                  <dt>Incident Declared</dt>
+                  <dd>07 November 2024 — 02:17 UTC</dd>
+                </div>
+              </dl>
+            </article>
+
+            <!-- Threat indicators -->
+            <article class="card card--threat" aria-labelledby="threat-heading">
+              <h2 id="threat-heading" class="card__heading">
+                <span class="card__heading-icon" aria-hidden="true">&#x26A0;</span>
+                Threat Indicators
+              </h2>
+              <ul class="threat-list" aria-label="Detected threat indicators">
+                <li class="threat-list__item threat-list__item--critical">
+                  <span class="threat-tag threat-tag--critical">CRITICAL</span>
+                  Unusual administrator account logins detected from unrecognized IP addresses
+                </li>
+                <li class="threat-list__item threat-list__item--critical">
+                  <span class="threat-tag threat-tag--critical">CRITICAL</span>
+                  Suspicious PowerShell commands launched with Base64-encoded payloads
+                </li>
+                <li class="threat-list__item threat-list__item--warning">
+                  <span class="threat-tag threat-tag--warning">WARNING</span>
+                  Possible lateral movement detected — service accounts accessing new hosts
+                </li>
+                <li class="threat-list__item threat-list__item--warning">
+                  <span class="threat-tag threat-tag--warning">WARNING</span>
+                  Anomalous outbound data transfers from database server subnet
+                </li>
+                <li class="threat-list__item threat-list__item--warning">
+                  <span class="threat-tag threat-tag--warning">WARNING</span>
+                  EDR alerts suppressed on two workstations — possible tamper attempt
+                </li>
+              </ul>
+            </article>
+
+            <!-- Your role -->
+            <article class="card" aria-labelledby="role-heading">
+              <h2 id="role-heading" class="card__heading">
+                <span class="card__heading-icon" aria-hidden="true">&#x1F464;</span>
+                Your Role
+              </h2>
+              <p class="role-description">
+                You are a member of NorthStar's Incident Response Team, activated under the organization's Cyber Incident Response Plan. You will receive situation updates and must make critical decisions that affect the security posture, business continuity, and public trust of the organization.
+              </p>
+              <p class="role-description">
+                Each decision you make will be evaluated against industry best practices. Your choices will determine the final incident-response rating.
+              </p>
+            </article>
+
+            <!-- Team setup form -->
+            <article class="card" aria-labelledby="team-heading">
+              <h2 id="team-heading" class="card__heading">
+                <span class="card__heading-icon" aria-hidden="true">&#x1F6E1;</span>
+                Team Setup
+              </h2>
+              <form id="team-form" class="team-form" novalidate aria-label="Incident team name form">
+                <div class="form-group">
+                  <label class="form-label" for="team-name-input">
+                    Incident Team Name
+                    <span class="form-label__optional">(optional)</span>
+                  </label>
+                  <!-- Security: maxlength set to 40; input validated in JS before display -->
+                  <input
+                    type="text"
+                    id="team-name-input"
+                    class="form-input"
+                    name="teamName"
+                    placeholder="e.g. Alpha Response Team"
+                    maxlength="40"
+                    autocomplete="off"
+                    spellcheck="false"
+                    aria-describedby="team-name-hint team-name-error"
+                  />
+                  <span id="team-name-hint" class="form-hint">
+                    Letters, numbers, spaces, hyphens and apostrophes only. Maximum 40 characters.
+                  </span>
+                  <!-- Security: Error message rendered via textContent, not innerHTML -->
+                  <span
+                    id="team-name-error"
+                    class="form-error"
+                    role="alert"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    hidden
+                  ></span>
+                </div>
+              </form>
+
+              <button
+                id="btn-begin"
+                type="button"
+                class="btn btn--primary btn--large"
+                aria-label="Begin the incident response simulation"
+              >
+                Begin Simulation
+              </button>
+            </article>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- -----------------------------------------------
+           VIEW 2: SECURITY OPERATIONS DASHBOARD
+           ----------------------------------------------- -->
+      <section
+        id="view-dashboard"
+        class="view"
+        aria-labelledby="dashboard-heading"
+        aria-hidden="true"
+      >
+        <div class="view__container">
+
+          <div class="dashboard-header">
+            <div>
+              <h1 id="dashboard-heading" class="dashboard-title">Security Operations Centre</h1>
+              <p class="dashboard-org">NorthStar Health Services — Active Incident: INC-2024-11-07</p>
+            </div>
+            <div class="dashboard-meta">
+              <div class="meta-item">
+                <span class="meta-item__label">Severity</span>
+                <span class="severity-badge severity-badge--critical" aria-label="Severity level: Critical">CRITICAL</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-item__label">Simulation Time</span>
+                <span id="timer-display" class="timer" aria-live="off">00:00:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score meters row -->
+          <div class="scores-row" role="region" aria-label="Current incident scores">
+            <div class="score-card">
+              <div class="score-card__label">Security Score</div>
+              <div class="score-card__value" id="score-security-display" aria-live="polite" aria-atomic="true">60</div>
+              <div class="score-meter" role="progressbar" aria-label="Security score" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" id="meter-security">
+                <div class="score-meter__fill score-meter__fill--security" id="fill-security" style="width: 60%"></div>
+              </div>
+            </div>
+            <div class="score-card">
+              <div class="score-card__label">Business Continuity</div>
+              <div class="score-card__value" id="score-bc-display" aria-live="polite" aria-atomic="true">60</div>
+              <div class="score-meter" role="progressbar" aria-label="Business continuity score" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" id="meter-bc">
+                <div class="score-meter__fill score-meter__fill--bc" id="fill-bc" style="width: 60%"></div>
+              </div>
+            </div>
+            <div class="score-card">
+              <div class="score-card__label">Public Trust</div>
+              <div class="score-card__value" id="score-trust-display" aria-live="polite" aria-atomic="true">60</div>
+              <div class="score-meter" role="progressbar" aria-label="Public trust score" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" id="meter-trust">
+                <div class="score-meter__fill score-meter__fill--trust" id="fill-trust" style="width: 60%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stat tiles row -->
+          <div class="stat-tiles" role="region" aria-label="Incident statistics">
+            <div class="stat-tile">
+              <div class="stat-tile__value stat-tile__value--critical" id="stat-systems">7</div>
+              <div class="stat-tile__label">Systems Affected</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-tile__value stat-tile__value--critical" id="stat-accounts">3</div>
+              <div class="stat-tile__label">Suspicious Accounts</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-tile__value stat-tile__value--warning" id="stat-alerts">0</div>
+              <div class="stat-tile__label">Live Alerts</div>
+            </div>
+            <div class="stat-tile">
+              <div class="stat-tile__value stat-tile__value--warning" id="stat-decisions">0 / 4</div>
+              <div class="stat-tile__label">Decisions Made</div>
+            </div>
+          </div>
+
+          <div class="dashboard-columns">
+            <!-- Live alert feed -->
+            <section class="card card--feed" aria-labelledby="alerts-heading">
+              <h2 id="alerts-heading" class="card__heading">
+                <span class="card__heading-icon" aria-hidden="true">&#x26A1;</span>
+                Live Alert Feed
+                <span class="feed-pulse" aria-hidden="true"></span>
+              </h2>
+              <div
+                id="alert-feed"
+                class="alert-feed"
+                role="log"
+                aria-label="Security alert feed"
+                aria-live="polite"
+                aria-atomic="false"
+                aria-relevant="additions"
+              >
+                <!-- Alerts injected here by script using textContent -->
+              </div>
+            </section>
+
+            <!-- Incident timeline -->
+            <section class="card" aria-labelledby="timeline-heading">
+              <h2 id="timeline-heading" class="card__heading">
+                <span class="card__heading-icon" aria-hidden="true">&#x1F4CB;</span>
+                Incident Timeline
+              </h2>
+              <ol class="timeline" aria-label="Incident timeline events" id="incident-timeline">
+                <li class="timeline__item">
+                  <div class="timeline__time">02:17 UTC</div>
+                  <div class="timeline__event">SIEM alert triggered — anomalous login detected</div>
+                </li>
+                <li class="timeline__item">
+                  <div class="timeline__time">02:23 UTC</div>
+                  <div class="timeline__event">Security analyst confirms suspicious PowerShell execution</div>
+                </li>
+                <li class="timeline__item">
+                  <div class="timeline__time">02:31 UTC</div>
+                  <div class="timeline__event">Incident declared — IR team activated</div>
+                </li>
+                <li class="timeline__item">
+                  <div class="timeline__time">02:41 UTC</div>
+                  <div class="timeline__event">Lateral movement indicators identified on subnet 10.4.x.x</div>
+                </li>
+                <li class="timeline__item">
+                  <div class="timeline__time">02:55 UTC</div>
+                  <div class="timeline__event">Large outbound data transfer detected — investigation ongoing</div>
+                </li>
+                <li class="timeline__item" id="timeline-you-joined">
+                  <div class="timeline__time" id="timeline-join-time">—</div>
+                  <div class="timeline__event timeline__event--highlight">You joined the incident response team</div>
+                </li>
+              </ol>
+            </section>
+          </div>
+
+          <div class="dashboard-footer">
+            <button
+              id="btn-to-decisions"
+              type="button"
+              class="btn btn--primary btn--large"
+              aria-label="Proceed to the Decision Room"
+            >
+              Enter Decision Room
+              <span aria-hidden="true">&#x2192;</span>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- -----------------------------------------------
+           VIEW 3: DECISION ROOM
+           ----------------------------------------------- -->
+      <section
+        id="view-decision"
+        class="view"
+        aria-labelledby="decision-heading"
+        aria-hidden="true"
+      >
+        <div class="view__container">
+
+          <div class="decision-header">
+            <h1 id="decision-heading" class="decision-title">Decision Room</h1>
+            <div class="decision-progress" aria-label="Decision progress">
+              <span id="decision-progress-label" class="decision-progress__label">Decision 1 of 4</span>
+              <div class="decision-progress__bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Decision progress bar" id="decision-progress-bar">
+                <div class="decision-progress__fill" id="decision-progress-fill" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live score strip in decision room -->
+          <div class="decision-scores" role="region" aria-label="Current scores">
+            <div class="decision-score-item">
+              <span class="decision-score-item__label">Security</span>
+              <span class="decision-score-item__value" id="d-score-sec">60</span>
+            </div>
+            <div class="decision-score-separator" aria-hidden="true"></div>
+            <div class="decision-score-item">
+              <span class="decision-score-item__label">Business Continuity</span>
+              <span class="decision-score-item__value" id="d-score-bc">60</span>
+            </div>
+            <div class="decision-score-separator" aria-hidden="true"></div>
+            <div class="decision-score-item">
+              <span class="decision-score-item__label">Public Trust</span>
+              <span class="decision-score-item__value" id="d-score-trust">60</span>
+            </div>
+          </div>
+
+          <!-- Decision card -->
+          <article class="decision-card" id="decision-card" aria-labelledby="decision-question">
+            <div class="decision-card__context">
+              <span class="decision-card__tag" id="decision-tag">SECURITY DECISION</span>
+              <span class="decision-card__number" id="decision-number" aria-label="Decision 1">01</span>
+            </div>
+
+            <h2 id="decision-question" class="decision-question"></h2>
+
+            <!-- Options rendered by script; text set via textContent -->
+            <fieldset class="decision-options" id="decision-options" aria-describedby="decision-question">
+              <legend class="sr-only">Select your response</legend>
+              <!-- Options injected by script -->
+            </fieldset>
+
+            <!-- Feedback panel (shown after selection) -->
+            <div
+              id="decision-feedback"
+              class="decision-feedback"
+              role="region"
+              aria-label="Decision feedback"
+              aria-live="polite"
+              aria-atomic="true"
+              hidden
+            >
+              <div class="decision-feedback__header" id="decision-feedback-header"></div>
+              <p class="decision-feedback__text" id="decision-feedback-text"></p>
+              <div class="decision-feedback__impact" id="decision-feedback-impact"></div>
+              <div class="decision-feedback__lesson" id="decision-feedback-lesson"></div>
+            </div>
+
+            <div class="decision-card__footer">
+              <button
+                id="btn-next-decision"
+                type="button"
+                class="btn btn--primary"
+                hidden
+                aria-label="Continue to next decision"
+              >
+                <span id="btn-next-label">Next Decision</span>
+                <span aria-hidden="true">&#x2192;</span>
+              </button>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- -----------------------------------------------
+           VIEW 4: AFTER-ACTION REPORT
+           ----------------------------------------------- -->
+      <section
+        id="view-report"
+        class="view"
+        aria-labelledby="report-heading"
+        aria-hidden="true"
+      >
+        <div class="view__container">
+
+          <header class="report-header">
+            <div class="report-header__badge">CLASSIFIED: TRAINING USE ONLY</div>
+            <h1 id="report-heading" class="report-title">After-Action Report</h1>
+            <p class="report-subtitle">NorthStar Health Services — Incident INC-2024-11-07</p>
+            <p id="report-team-name" class="report-team-name" hidden></p>
+          </header>
+
+          <!-- Rating banner -->
+          <div id="report-rating-banner" class="rating-banner" role="region" aria-labelledby="rating-label">
+            <div class="rating-banner__inner">
+              <div class="rating-banner__label" id="rating-label">Final Rating</div>
+              <div class="rating-banner__title" id="report-rating-title" aria-live="polite"></div>
+              <div class="rating-banner__score" id="report-total-score" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <!-- Final score breakdown -->
+          <section class="report-section" aria-labelledby="scores-heading">
+            <h2 id="scores-heading" class="report-section__heading">Score Breakdown</h2>
+            <div class="report-scores-grid">
+              <div class="report-score-card" id="rsc-security">
+                <div class="report-score-card__label">Security Score</div>
+                <div class="report-score-card__value" id="report-score-sec"></div>
+                <div class="score-meter" role="progressbar" aria-label="Final security score" id="report-meter-sec">
+                  <div class="score-meter__fill score-meter__fill--security" id="report-fill-sec"></div>
+                </div>
+              </div>
+              <div class="report-score-card" id="rsc-bc">
+                <div class="report-score-card__label">Business Continuity</div>
+                <div class="report-score-card__value" id="report-score-bc"></div>
+                <div class="score-meter" role="progressbar" aria-label="Final business continuity score" id="report-meter-bc">
+                  <div class="score-meter__fill score-meter__fill--bc" id="report-fill-bc"></div>
+                </div>
+              </div>
+              <div class="report-score-card" id="rsc-trust">
+                <div class="report-score-card__label">Public Trust</div>
+                <div class="report-score-card__value" id="report-score-trust"></div>
+                <div class="score-meter" role="progressbar" aria-label="Final public trust score" id="report-meter-trust">
+                  <div class="score-meter__fill score-meter__fill--trust" id="report-fill-trust"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Decision review -->
+          <section class="report-section" aria-labelledby="decisions-review-heading">
+            <h2 id="decisions-review-heading" class="report-section__heading">Decision Review</h2>
+            <div id="report-decisions" class="report-decisions">
+              <!-- Decision reviews injected by script -->
+            </div>
+          </section>
+
+          <!-- Positive actions -->
+          <div class="report-columns">
+            <section class="card" aria-labelledby="positives-heading">
+              <h2 id="positives-heading" class="card__heading card__heading--success">
+                <span class="card__heading-icon" aria-hidden="true">&#x2713;</span>
+                Positive Actions
+              </h2>
+              <ul id="report-positives" class="report-list report-list--positive" aria-label="Positive actions taken">
+              </ul>
+            </section>
+
+            <section class="card" aria-labelledby="improvements-heading">
+              <h2 id="improvements-heading" class="card__heading card__heading--warning">
+                <span class="card__heading-icon" aria-hidden="true">&#x26A0;</span>
+                Areas for Improvement
+              </h2>
+              <ul id="report-improvements" class="report-list report-list--warning" aria-label="Areas for improvement">
+              </ul>
+            </section>
+          </div>
+
+          <!-- Security lessons -->
+          <section class="card report-section" aria-labelledby="lessons-heading">
+            <h2 id="lessons-heading" class="card__heading">
+              <span class="card__heading-icon" aria-hidden="true">&#x1F4DA;</span>
+              Security Lessons
+            </h2>
+            <ul id="report-lessons" class="lessons-list" aria-label="Security lessons from this incident">
+            </ul>
+          </section>
+
+          <div class="report-footer">
+            <button
+              id="btn-restart"
+              type="button"
+              class="btn btn--secondary btn--large"
+              aria-label="Restart the simulation from the beginning"
+            >
+              Restart Simulation
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===================================================
+         FOOTER
+         =================================================== -->
+    <footer class="site-footer" role="contentinfo">
+      <p class="site-footer__text">
+        Defend the North: Incident Command Simulator — Educational use only.
+        Inspired by the ODTN scenario "How Security Teams Stop Cyber Attacks From Spreading."
+      </p>
+    </footer>
+
+    <!-- Security: script loaded as module; no inline JS -->
+    <script type="module" src="/src/script.js"></script>
+  </body>
+</html>
