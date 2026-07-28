@@ -1,0 +1,159 @@
+Build a secure, responsive cybersecurity incident-response simulation website called “Defend the North: Incident Command Simulator.”
+
+PURPOSE:
+The website is an educational experience inspired by the ODTN scenario “How Security Teams Stop Cyber Attacks From Spreading.” The visitor acts as a member of an incident-response team and must make decisions during a fictional cyberattack.
+
+TECHNOLOGY:
+Use only HTML5, CSS3 and vanilla JavaScript.
+Create a static client-side website.
+Do not use React, a database, authentication, external APIs, AI APIs, cookies or analytics.
+Do not include API keys, secrets, tokens or third-party JavaScript libraries.
+Do not collect or transmit personal information.
+All decisions and scores must remain temporarily in browser memory only.
+The website must work without a backend.
+
+DESIGN:
+Create a professional security operations centre appearance.
+Use a dark navy interface with accessible contrast.
+Use red only for critical alerts, amber for warnings and green for contained or completed actions.
+The site must be responsive on desktop and mobile.
+Include clear keyboard focus states.
+Use semantic HTML and accessible labels.
+Do not use flashing animations.
+Do not use externally hosted images.
+Create simple graphics with CSS where needed.
+
+NAVIGATION:
+Create four clear views or sections:
+
+1. INCIDENT BRIEFING
+Display information about a fictional Canadian healthcare organization called NorthStar Health Services.
+Explain that unusual administrator logins, suspicious PowerShell activity and possible lateral movement have been detected.
+Explain that the user is part of the incident-response team.
+Display this warning prominently:
+“This is a fictional cybersecurity training simulation. Do not enter real credentials or confidential information.”
+Include a “Begin Simulation” button.
+
+2. SECURITY OPERATIONS DASHBOARD
+Display:
+- Incident severity
+- Simulation time
+- Systems affected
+- Suspicious accounts
+- Security score
+- Business continuity score
+- Public trust score
+- A fictional live-alert feed
+- An incident timeline
+
+Use sample fictional alerts such as:
+- Multiple failed administrator logins detected
+- PowerShell launched with encoded commands
+- Service account login from an unusual device
+- Possible lateral movement detected
+- Large outbound data transfer observed
+
+Include a button that moves the user to the Decision Room.
+
+3. DECISION ROOM
+Create four sequential incident decisions.
+
+Decision 1:
+“A privileged service account may have been compromised. What should the team do?”
+Options:
+- Disable the account immediately
+- Reset the password but leave it active
+- Continue monitoring without taking action
+
+Decision 2:
+“Suspicious activity has reached two critical servers. What should the team do?”
+Options:
+- Isolate the affected network segment
+- Shut down the entire company network
+- Keep systems online while gathering more evidence
+
+Decision 3:
+“Senior management wants an immediate incident update. What should the team communicate?”
+Options:
+- Provide confirmed facts, risks, actions and uncertainties
+- Tell management there is no serious problem
+- Wait until the investigation is complete
+
+Decision 4:
+“A journalist asks whether customer information was exposed. What should the organization do?”
+Options:
+- Coordinate a verified response with legal and communications teams
+- Deny that an incident occurred
+- Publish technical investigation details immediately
+
+Each selection must:
+- Update security, business continuity and public trust scores
+- Show an educational explanation
+- Prevent the user from selecting multiple answers for the same decision
+- Allow progression only after a selection
+- Store selections only in a JavaScript variable
+- Treat all displayed text as plain text
+- Never inject user-controlled HTML into the page
+
+4. AFTER-ACTION REPORT
+Show:
+- Final total score
+- Security score
+- Business continuity score
+- Public trust score
+- Every decision selected
+- Positive actions
+- Areas for improvement
+- Security lessons
+- A final incident-response rating
+
+Ratings:
+85–100: Incident Commander
+70–84: Strong Responder
+50–69: Developing Analyst
+Below 50: Response Plan Requires Improvement
+
+Include a “Restart Simulation” button that clears all temporary state and returns to the briefing.
+
+INTERACTION:
+Add a field where the user may enter a fictional incident team name.
+The team name must:
+- Be optional
+- Have a maximum length of 40 characters
+- Be trimmed before use
+- Accept only letters, numbers, spaces, hyphens and apostrophes
+- Display a clear error for invalid input
+- Be rendered using textContent, never innerHTML
+- Never be transmitted or permanently stored
+
+SECURITY REQUIREMENTS:
+- Add a Content Security Policy meta tag suitable for a static app.
+- Do not use eval(), document.write(), inline event handlers or dynamic script execution.
+- Use addEventListener for all interactions.
+- Use textContent for dynamic content.
+- Validate the optional team-name field.
+- Add maxlength to the field.
+- Do not create hidden administrator pages.
+- Do not expose development notes, credentials or secrets.
+- Do not use vulnerable dependencies because no external packages are needed.
+- Add rel="noopener noreferrer" to any external links.
+- Add comments identifying important security controls.
+- Include a SECURITY.md file that explains the security decisions.
+- Include a README.md file with project purpose, features, testing steps and publishing instructions.
+
+Create separate files:
+- index.html
+- styles.css
+- script.js
+- README.md
+- SECURITY.md
+
+Before completing, test:
+- Navigation between every view
+- Every decision option
+- Score calculations
+- Restart functionality
+- Invalid team-name input
+- Mobile responsiveness
+- Keyboard navigation
+- Browser console for errors
