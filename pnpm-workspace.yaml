@@ -158,3 +158,12 @@ overrides:
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
+  # Security: bump vulnerable transitive dependencies to patched versions (non-breaking patch bumps)
+  # GHSA-r28c-9q8g-f849: postcss path traversal in source map auto-loading
+  postcss: "^8.5.18"
+  # GHSA-52cp-r559-cp3m: js-yaml YAML merge-key chain DoS
+  js-yaml: "^4.3.0"
+  # GHSA-v2hh-gcrm-f6hx: fast-uri host confusion via literal backslash
+  fast-uri: "^3.1.4"
+  # GHSA-mh99-v99m-4gvg: brace-expansion DoS (only applies to v5 path via minimatch)
+  "minimatch>brace-expansion": "^5.0.8"

@@ -1,70 +1,99 @@
-# Security Design Documentation
+# Security Policy
 
 **Defend the North: Incident Command Simulator**
-Version 1.0 — Educational static web application
+Version 2.0 — Educational static web application
 
 ---
 
-## Overview
+## About This Application
 
-This document explains the security decisions made in the design and implementation of this application. Although the application is a static educational tool with no backend, user accounts, or sensitive data processing, deliberate security controls have been applied as best-practice examples and to honour the spirit of the subject matter.
+Defend the North is an **educational cybersecurity incident-response simulation**. It presents a fictional scenario involving a fictional Canadian healthcare organization and guides users through four sequential decision points. No real organisation, patient, or employee data is involved.
+
+**Important notices:**
+- This application implements **no real authentication**. There are no user accounts, sessions, or login flows.
+- Users must **not** enter real credentials, passwords, patient data, or any confidential information. The team-name field accepts a short identifier only; it is stored in memory for the duration of the simulation and discarded when the tab is closed.
+- All scenario content, organization names, IP addresses, and incident data are entirely fictional.
 
 ---
 
-## Content Security Policy
+## Reporting Security Vulnerabilities
 
-A `Content-Security-Policy` meta tag is included in `index.html`:
+Please **do not** open a public issue to report a security vulnerability.
 
-```
-default-src 'self';
-script-src 'self' 'unsafe-inline';
-style-src 'self' 'unsafe-inline';
-img-src 'self' data:;
-font-src 'self';
-form-action 'self';
-frame-ancestors 'none';
-```
+Use GitHub's private vulnerability reporting:
 
-**Key controls:**
+**[Report a vulnerability](https://github.com/Iyke0147/Defend-the-North-Incident-Simulator/security/advisories/new)**
 
-- `default-src 'self'` — blocks all resources not served from the same origin by default
-- `script-src 'self'` — prevents loading of third-party scripts that could execute malicious code
-- `img-src 'self' data:` — allows only locally served images and inline SVG/data URIs; blocks exfiltration via image beacons
-- `form-action 'self'` — prevents form submissions to external origins
+Include a clear description of the issue, the steps to reproduce it, and its potential impact. You will receive a response within a reasonable timeframe.
 
-> Note: `'unsafe-inline'` is present in both `script-src` and `style-src` to support Vite's development-mode injection of the HMR client script and inline style tags. In a fully static production deployment (no Vite dev server), both can be removed, leaving `script-src 'self'` and `style-src 'self'`.
+---
 
-> Note on `frame-ancestors`: this directive is **silently ignored by all browsers when delivered via a `<meta>` tag** — it is only honoured in HTTP response headers. It has therefore been omitted from the meta CSP. For production deployments, set `X-Frame-Options: DENY` and `Content-Security-Policy: frame-ancestors 'none'` as HTTP headers on the web server to achieve clickjacking protection.
+## Production Security Headers
+
+The production server (`server.mjs`) sets the following HTTP response headers on every response:
+
+| Header | Value |
+|--------|-------|
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests` |
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` |
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `no-referrer` |
+| `Permissions-Policy` | `geolocation=(), microphone=(), camera=(), payment=(), usb=()` |
+| `Cross-Origin-Opener-Policy` | `same-origin` |
+| `Cross-Origin-Resource-Policy` | `same-origin` |
+| `X-XSS-Protection` | `0` |
+
+`Cache-Control: no-store` is applied to `index.html`, `robots.txt`, and `security.txt`. Versioned static assets (JS, CSS, fonts) receive `Cache-Control: public, max-age=31536000, immutable`.
+
+**Development note:** The Vite dev server (used during local development via `pnpm dev`) applies equivalent headers where possible but includes `'unsafe-inline'` in `script-src` and `style-src` to support Vite's Hot Module Replacement client. This relaxation is development-only and is **not** present in the production server configuration.
+
+---
+
+## Content Security Policy Rationale
+
+The production CSP (`script-src 'self'`, `style-src 'self'`) enforces:
+
+- **No inline scripts** — all JavaScript is loaded from same-origin external files
+- **No inline styles** — all CSS is loaded from same-origin external files; score-meter widths are set via JavaScript CSSOM (`element.style.width`) which is not restricted by `style-src`
+- **No external resources** — all assets must originate from the same domain
+- **No framing** — `frame-ancestors 'none'` (enforced via HTTP header, which all browsers honour; the equivalent meta tag directive is ignored by browsers)
+- **Upgrade insecure requests** — any accidental HTTP sub-resource requests are upgraded to HTTPS
 
 ---
 
 ## No innerHTML for Dynamic Content
 
-All user-supplied or dynamically generated text is rendered exclusively via `textContent` or explicit DOM node creation. No use of `innerHTML`, `outerHTML`, `insertAdjacentHTML`, or `document.write()` appears anywhere in `script.js`.
-
-This prevents Cross-Site Scripting (XSS) attacks even if input validation were somehow bypassed.
-
-**Relevant code pattern (from script.js):**
-```javascript
-// Security: textContent — never innerHTML
-el.textContent = userSuppliedValue;
-```
+All user-supplied or dynamically generated text is rendered exclusively via `textContent` or explicit DOM node creation (`document.createElement`, `createTextNode`). The codebase contains no assignment to `innerHTML`, `outerHTML`, `insertAdjacentHTML`, or `document.write`.
 
 ---
 
-## Team Name Input Validation
+## Input Validation — Team Name Field
 
-The optional team name field is the only user-controlled input. It is protected by:
+The team name input is the only user-controlled field. It is protected by:
 
-1. **`maxlength="40"` attribute** — enforced by the browser; limits input length at the DOM level before JavaScript runs
-2. **Trim before validation** — leading/trailing whitespace is stripped with `.trim()`
-3. **Allowlist regex** — only letters, numbers, spaces, hyphens, and apostrophes are permitted:
-   ```javascript
-   /^[A-Za-z0-9 '\-]+$/.test(value)
-   ```
-4. **Never transmitted** — the value exists only as a JavaScript variable in the current page session
-5. **Rendered via textContent** — the validated value is inserted using `textContent`, never `innerHTML`
-6. **aria-invalid** — set to `true` on invalid input to notify screen readers
+1. `maxlength="40"` attribute — enforced by the browser before JavaScript runs
+2. **Unicode NFC normalization** — prevents homoglyph attacks via alternative Unicode representations
+3. **Control character removal** — strips C0/C1 control characters
+4. **Zero-width character removal** — strips invisible Unicode characters (`U+200B`–`U+200D`, `U+2060`, `U+FEFF`, etc.)
+5. **Whitespace trim** — leading/trailing whitespace stripped
+6. **Hard cap at 40 characters** — enforced after normalization in JavaScript
+7. **Allowlist regex** — `/^[A-Za-z0-9 '\-]+$/` — only letters, numbers, spaces, hyphens, apostrophes
+8. **`aria-invalid` feedback** — set to `true` on rejection to inform screen readers
+9. **Rendered via `textContent`** — the validated value is never passed to `innerHTML`
+10. **Never transmitted** — the value lives only in a JavaScript variable for the current session
+
+---
+
+## No Persistent Browser Storage
+
+This application intentionally uses **no cookies**, **no `localStorage`**, **no `sessionStorage`**, **no `IndexedDB`**, and makes **no `fetch`, `XMLHttpRequest`, or `WebSocket` calls** to external services. All simulation state is held in JavaScript memory variables and is discarded when the browser tab is closed or the page is refreshed.
+
+---
+
+## No Secrets or Credentials in Source
+
+The application contains no API keys, tokens, passwords, connection strings, or secret values. There is nothing to protect at rest or in transit beyond the static files themselves.
 
 ---
 
@@ -74,95 +103,39 @@ The application does not use:
 - `eval()`
 - `Function()` constructor
 - `setTimeout(string)` / `setInterval(string)` with string arguments
-- `document.write()`
-- Dynamic `<script>` tag injection
+- Dynamic `<script>` injection
 - `import()` with user-controlled paths
 
-All logic is in the statically loaded `src/script.js` module.
+---
+
+## Supply-Chain Security
+
+- The project uses **pnpm** with a lockfile and a `minimumReleaseAge` setting in `pnpm-workspace.yaml` that requires packages to have been published for at least 24 hours before installation (defence against supply-chain attacks via newly published malicious versions).
+- A GitHub Actions workflow runs `pnpm audit --audit-level=high` on every push and pull request and fails the build if high or critical vulnerabilities are present.
 
 ---
 
-## Event Listeners Only — No Inline Handlers
+## Replit Hosting Limitations
 
-All interactivity is wired with `addEventListener`. The HTML contains no `onclick`, `onchange`, `onsubmit`, `onkeydown`, or other inline event handler attributes. This separation ensures the Content Security Policy's script controls apply correctly and makes the codebase easier to audit.
+When deployed on Replit's static hosting:
 
----
-
-## No External Dependencies
-
-The application loads:
-- Zero third-party JavaScript libraries
-- Zero external API calls
-- Zero analytics, tracking, or telemetry scripts
-- Zero cookies
-
-This eliminates the entire supply-chain risk category from external JavaScript dependencies. There is no `package-lock.json` or `node_modules` in the deployed artifact.
+- **HTTP response headers** set by `server.mjs` require a Replit **Autoscale** or equivalent deployment that runs a server process. Replit's pure static hosting serves files without a custom server and therefore cannot apply the security headers listed above.
+- The `frame-ancestors 'none'` directive in the CSP is only effective when delivered as an HTTP response header. If the app is served without `server.mjs`, this clickjacking protection is not active.
+- `Strict-Transport-Security` is only meaningful over HTTPS. Replit's `.replit.app` domains are served over HTTPS; local development (`localhost`) is HTTP only, so HSTS has no effect in development.
 
 ---
 
-## Data Handling
+## Recommended Hardening for Production Deployment
 
-All simulation state is held exclusively in JavaScript memory variables within the current page session:
-- No `localStorage` or `sessionStorage` writes
-- No `IndexedDB` writes
-- No cookie creation (`document.cookie` is never written)
-- No `fetch()`, `XMLHttpRequest`, or `WebSocket` calls to external services
-- No user-entered data is included in URL parameters
-
-When the user navigates away, refreshes, or restarts the simulation, all state is discarded.
-
----
-
-## No Hidden Pages or Developer Backdoors
-
-The application contains exactly four visible views:
-1. Incident Briefing
-2. Security Operations Dashboard
-3. Decision Room
-4. After-Action Report
-
-There are no hidden administrator pages, debug endpoints, developer overrides, or score manipulation shortcuts. The `showView()` function accepts only the four valid view IDs.
-
----
-
-## No Exposed Credentials or Secrets
-
-The application contains no API keys, tokens, passwords, connection strings, or secret values of any kind. There is nothing to protect at rest or in transit.
-
----
-
-## External Links
-
-The application contains no outbound links. If any were added in future, they would require `rel="noopener noreferrer"` as an attribute to prevent the destination page from accessing the originating window's context.
-
----
-
-## Semantic HTML and Accessibility Controls
-
-Accessibility controls are security-adjacent in that they prevent users from being confused or misled:
-- All views use `aria-hidden="true"` when not active, preventing screen readers from announcing hidden content
-- `aria-live` regions are used for the alert feed and score displays
-- `aria-invalid` is set on the team name input when validation fails
-- `role="alert"` is used for the security disclaimer banner
-
----
-
-## Recommended Production Hardening
-
-If this application were deployed to a production web server (beyond the static file host), the following additional HTTP response headers should be set at the server level:
+When deploying to a production web server, ensure:
 
 ```
 Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
 Referrer-Policy: no-referrer
-Permissions-Policy: camera=(), microphone=(), geolocation=()
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; ...
 ```
 
-The `frame-ancestors 'none'` in the CSP meta tag already handles framing for supporting browsers, but `X-Frame-Options` provides broader browser coverage.
-
----
-
-## Reporting Security Issues
-
-This is an educational simulation with no network-accessible backend. If you identify a client-side security issue, please document it as a learning example — the application's purpose is to model good security practices.
+These are already implemented in `server.mjs`. If using a CDN or reverse proxy in front of `server.mjs`, verify that it does not strip or override these headers.

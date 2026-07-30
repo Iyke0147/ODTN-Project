@@ -5,27 +5,41 @@ import { defineConfig } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
+// PORT and BASE_PATH are optional — default to 5000 and '/' so the project
+// starts without any environment variables (Replit injects them at runtime).
 const rawPort = process.env.PORT;
-
-if (!rawPort) {
-  throw new Error(
-    'PORT environment variable is required but was not provided.',
-  );
-}
-
-const port = Number(rawPort);
+const port = rawPort ? Number(rawPort) : 5000;
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH;
+const basePath = process.env.BASE_PATH ?? '/';
 
-if (!basePath) {
-  throw new Error(
-    'BASE_PATH environment variable is required but was not provided.',
-  );
-}
+// Security headers applied by the Vite dev server and preview server.
+// The dev CSP includes 'unsafe-inline' only because Vite's HMR client
+// injects inline scripts and styles at runtime.  The production server
+// (server.mjs) uses a strict policy without 'unsafe-inline'.
+const DEV_SECURITY_HEADERS = {
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline'",   // Vite HMR requires this in dev
+    "style-src 'self' 'unsafe-inline'",    // Vite style injection requires this in dev
+    "img-src 'self' data:",
+    "font-src 'self'",
+    "connect-src 'self' ws: wss:",          // Vite HMR WebSocket
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; '),
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'no-referrer',
+  'Permissions-Policy': 'geolocation=(), microphone=(), camera=(), payment=(), usb=()',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+  'X-XSS-Protection': '0',
+};
 
 export default defineConfig({
   base: basePath,
@@ -66,9 +80,10 @@ export default defineConfig({
   },
   server: {
     port,
-    strictPort: true,
+    strictPort: false,
     host: '0.0.0.0',
     allowedHosts: true,
+    headers: DEV_SECURITY_HEADERS,
     fs: {
       strict: true,
     },
@@ -77,5 +92,6 @@ export default defineConfig({
     port,
     host: '0.0.0.0',
     allowedHosts: true,
+    headers: DEV_SECURITY_HEADERS,
   },
 });
