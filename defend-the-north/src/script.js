@@ -190,13 +190,38 @@ let state = {
 };
 
 /* =====================================================
-   SECURITY: TEAM NAME VALIDATION
+   SECURITY: TEAM NAME NORMALIZATION AND VALIDATION
+   All input is normalized before validation:
+     1. Unicode NFC (canonical composition)
+     2. Control characters stripped (C0/C1 except printable)
+     3. Zero-width / invisible characters stripped
+     4. Whitespace trimmed
+     5. Hard cap at 40 characters
    Allowlist regex — only permits letters, numbers,
    spaces, hyphens, and apostrophes.
    The value is NEVER inserted with innerHTML.
    ===================================================== */
 
-/** @param {string} value */
+/**
+ * Normalize a raw team name string before validation or display.
+ * @param {string} raw
+ * @returns {string}
+ */
+function normalizeTeamName(raw) {
+  let val = String(raw);
+  // Step 1: Unicode NFC normalization
+  val = val.normalize('NFC');
+  // Step 2: Strip C0 and C1 control characters (keep printable ASCII/Unicode)
+  val = val.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '');
+  // Step 3: Strip zero-width and invisible Unicode characters
+  val = val.replace(/[\u200B\u200C\u200D\u2060\uFEFF\u00AD\u2028\u2029]/g, '');
+  // Step 4: Trim surrounding whitespace
+  val = val.trim();
+  // Step 5: Hard cap at 40 characters
+  return val.substring(0, 40);
+}
+
+/** @param {string} value — must already be normalized */
 function isValidTeamName(value) {
   if (value.length === 0) return true;                        // Optional field
   if (value.length > 40) return false;                       // Hard cap
@@ -397,7 +422,7 @@ function handleBeginSimulation() {
   // Security: validate team name before use
   const rawInput = document.getElementById('team-name-input');
   const errorEl  = document.getElementById('team-name-error');
-  const trimmed  = (rawInput ? rawInput.value : '').trim().substring(0, 40);
+  const trimmed  = normalizeTeamName(rawInput ? rawInput.value : '');
 
   // Clear previous error
   if (errorEl) {
@@ -974,7 +999,7 @@ function initApp() {
     });
     // Validate on blur for immediate feedback
     teamNameInput.addEventListener('blur', () => {
-      const val     = teamNameInput.value.trim().substring(0, 40);
+      const val     = normalizeTeamName(teamNameInput.value);
       const errorEl = document.getElementById('team-name-error');
       if (val && !isValidTeamName(val)) {
         if (errorEl) {

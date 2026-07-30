@@ -678,6 +678,7 @@ main {
 
 .score-meter__fill {
   height: 100%;
+  width: 0;   /* Default — JS sets the live value via element.style.width (CSSOM, not inline style) */
   border-radius: 3px;
   transition: width var(--transition-slow), background-color var(--transition-slow);
 }
@@ -919,6 +920,7 @@ main {
 
 .decision-progress__fill {
   height: 100%;
+  width: 0;   /* Default — JS sets the live value via element.style.width (CSSOM, not inline style) */
   background-color: var(--accent);
   border-radius: 2px;
   transition: width var(--transition-slow);
