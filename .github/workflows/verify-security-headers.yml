@@ -1,0 +1,77 @@
+name: Verify Production Security Headers
+
+# Runs a live curl check against the deployed app after every push to
+# security-remediation and main, plus a daily scheduled check.
+# Fails the build if any required security header is missing — this is
+# the automated version of the manual `curl -sI` check we ran by hand
+# after discovering that a static-hosting deployment silently dropped
+# every header server.mjs sets.
+
+on:
+  push:
+    branches: [main, security-remediation]
+  schedule:
+    - cron: '17 6 * * *'  # once a day, arbitrary offset to avoid the top of the hour
+  workflow_dispatch: {}    # allows manually triggering a check from the Actions tab
+
+env:
+  TARGET_URL: https://incident-respond-pro--danijjiyke.replit.app/
+
+jobs:
+  check-headers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch headers
+        id: headers
+        run: |
+          curl -sI "$TARGET_URL" > headers.txt
+          echo "----- raw headers -----"
+          cat headers.txt
+
+      - name: Assert required security headers are present
+        run: |
+          set -e
+          missing=0
+
+          check_header() {
+            local name="$1"
+            if ! grep -qi "^$name:" headers.txt; then
+              echo "::error::Missing header: $name"
+              missing=1
+            fi
+          }
+
+          check_header "content-security-policy"
+          check_header "x-frame-options"
+          check_header "x-content-type-options"
+          check_header "referrer-policy"
+          check_header "permissions-policy"
+          check_header "strict-transport-security"
+          check_header "cross-origin-opener-policy"
+          check_header "cross-origin-resource-policy"
+
+          # Guard against the exact regression this workflow exists to catch:
+          # Replit's static-hosting path serves via a different signature
+          # (no CSP/XFO/etc., cache-control: private, Server: Google Frontend
+          # with none of the above headers). If none of the security headers
+          # are present at all, call that out explicitly.
+          if grep -qi "^cache-control: private$" headers.txt && ! grep -qi "^content-security-policy:" headers.txt; then
+            echo "::error::Response signature matches static-hosting fallback (cache-control: private, no CSP) — check the Replit deployment type is Autoscale/Reserved VM running server.mjs, not static publish."
+            missing=1
+          fi
+
+          if [ "$missing" -eq 1 ]; then
+            echo "::error::One or more required security headers are missing from production."
+            exit 1
+          fi
+
+          echo "All required security headers present."
+
+      - name: Assert robots meta tag matches expected value
+        run: |
+          body=$(curl -s "$TARGET_URL")
+          if ! echo "$body" | grep -qi '<meta name="robots" content="noindex, nofollow"'; then
+            echo "::error::robots meta tag missing or does not match expected 'noindex, nofollow' — production may be serving a stale build."
+            exit 1
+          fi
+          echo "robots meta tag OK."
